@@ -2,6 +2,7 @@ import sys
 import ejson
 import time
 import socket
+import re
 
 from ws4py.exc import WebSocketException
 from ws4py.client.threadedclient import WebSocketClient
@@ -67,11 +68,15 @@ class DDPClient(EventEmitter):
         self.auto_reconnect = auto_reconnect
         self.auto_reconnect_timeout = auto_reconnect_timeout
         self.debug = debug
-        self.headers = headers
+        self.headers = [('Host', self._get_domain_from_url(self.url))].append(headers)
         self._session = None
         self._uniq_id = 0
         self._callbacks = {}
         self._init_socket()
+
+    def _get_domain_from_url(self, url):
+        p = re.compile('ws.://(.*?)/')
+        return p.match(url).group(1)
 
     def _init_socket(self):
         """Initialize the ddp socket"""
