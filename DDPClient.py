@@ -11,13 +11,13 @@ DDP_VERSIONS = ["1", "pre2", "pre1"]
 
 class DDPSocket(WebSocketClient, EventEmitter):
     """DDPSocket"""
-    def __init__(self, url, debug=False):
+    def __init__(self, url, debug=False, headers=None):
         self.debug = debug
         # by default socket connections don't timeout. this causes issues
         # where reconnects can get stuck
         # TODO: make this configurable?
         socket.setdefaulttimeout(10)
-        WebSocketClient.__init__(self, url)
+        WebSocketClient.__init__(self, url, headers=headers)
         EventEmitter.__init__(self)
 
     def opened(self):
@@ -56,7 +56,7 @@ class DDPSocket(WebSocketClient, EventEmitter):
 
 class DDPClient(EventEmitter):
     """An event driven ddp client"""
-    def __init__(self, url, auto_reconnect=True, auto_reconnect_timeout=0.5, debug=False):
+    def __init__(self, url, auto_reconnect=True, auto_reconnect_timeout=0.5, debug=False, headers=None):
         EventEmitter.__init__(self)
         self.ddpsocket = None
         self._ddp_version_index = 0
@@ -67,6 +67,7 @@ class DDPClient(EventEmitter):
         self.auto_reconnect = auto_reconnect
         self.auto_reconnect_timeout = auto_reconnect_timeout
         self.debug = debug
+        self.headers = headers
         self._session = None
         self._uniq_id = 0
         self._callbacks = {}
@@ -83,7 +84,7 @@ class DDPClient(EventEmitter):
             self.ddpsocket = None
 
         # create a ddp socket and subscribe to events
-        self.ddpsocket = DDPSocket(self.url, self.debug)
+        self.ddpsocket = DDPSocket(self.url, self.debug, headers=self.headers)
         self.ddpsocket.on('received_message', self.received_message)
         self.ddpsocket.on('closed', self.closed)
         self.ddpsocket.on('opened', self.opened)
